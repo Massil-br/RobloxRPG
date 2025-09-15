@@ -4,7 +4,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local  Types = require(ReplicatedStorage.Shared.Types)
 type Error = Types.Error
 local err :Error= {}
-local Money = {}
 Players.PlayerAdded:Connect(function(player)
     err = MoneyManager:AddUser(player.UserId)
     if err then
@@ -33,4 +32,4 @@ end)
 
 print("[Server] Money script initialized.")
 
-return Money
+
