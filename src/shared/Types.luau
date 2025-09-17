@@ -25,8 +25,26 @@ export type MoneyManager = {
 
 export type Error = {
     message :string,
-    New:(string)->(Error),
+    New:(message:string)->(Error),
     GetMessage:()->(string)
+}
+
+
+export type Health = {
+    health : number,
+    maxHealth: number,
+    isAlive : boolean,
+    New :()->(Health),
+    SetHealth:(amount:number)->(Error?),
+    AddHealth:(amount:number)->(Error?),
+    RemoveHealth:(amount:number)->(Error?),
+    Revive:()->(Error?),
+    Kill:()->(Error?),
+    SetMaxHealth:(amount:number)->(Error?),
+    AddMaxHealth:(amount:number)->(Error?),
+    RemoveMaxHealth:(amount:number)->(Error?),
+    Heal:(amount:number)->(Error?),
+    
 }
 
 return {}
