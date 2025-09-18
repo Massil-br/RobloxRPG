@@ -2,9 +2,10 @@ local Types = require(game.ReplicatedStorage.Shared.Types)
 local ErrorModule = require(game.ReplicatedStorage.Shared.class.Error.Error)
 local MoneyModule = require(game.ReplicatedStorage.Shared.class.Money.Money)
 type MoneyManager = Types.MoneyManager
+type Money = Types.Money
 type Error = Types.Error
 local DataStoreService = game:GetService("DataStoreService")
-local moneyStore = DataStoreService:GetDataStore("MoneyDataStore")
+local playersMoneyStore = DataStoreService:GetDataStore("playersMoneyStore")
 
 local MoneyManager = {}
 MoneyManager.__index = MoneyManager
@@ -65,11 +66,32 @@ function MoneyManager:AddUser(userId:number):Error?
     self.playersMoney[userId] = money
 end
 
+function MoneyManager:LoadPlayerData(userId:number):Error?
+
+    if not self.playersMoney[userId] then
+        self:AddUser(userId)
+    end
+
+    local success, data = pcall(function()
+        playersMoneyStore:GetAsync(tostring(userId))
+    end)
+
+    if success then
+        if data then
+            self.playersMoney[userId]:SetMoney(data)
+        else
+            self.playersMoney[userId]:SetMoney(0)
+        end
+    else
+        return ErrorModule.New("Failed to load money for :"..userId)
+    end
+end
+
 function MoneyManager:LoadData():Error?
     local self = self
     for userId, money in pairs(self.playersMoney) do
         local success, data = pcall(function()
-            moneyStore:GetAsync(tostring(userId))
+            playersMoneyStore:GetAsync(tostring(userId))
         end)
         if success then
             if data then
@@ -78,30 +100,31 @@ function MoneyManager:LoadData():Error?
                 money:SetMoney(0)
             end
         else
-            return ErrorModule.New("Faild to load money for userId: "..userId)
+            return ErrorModule.New("Failed to load money for userId: "..userId)
         end
     end
 end
 
 function MoneyManager:SaveData():Error?
     local self = self
-    for userId, money in pairs(self.playersMoney)do
+    for userId, money:Money in pairs(self.playersMoney)do
         local success,err = pcall(function()
-            moneyStore:SetAsync(tostring(userId),money.money)
+            playersMoneyStore:SetAsync(tostring(userId),money.money)
         end)
         if not success then
-            return ErrorModule.New("Failed to save money for: " .. userId.." Error:"..err)
+            return ErrorModule.New("Failed to save money for: " .. userId.." Error: "..err)
         end
     end
 end
 
-function MoneyManager:SavePlayerData( userId:number)
+function MoneyManager:SavePlayerData( userId:number):Error?
     local self = self
     if not self.playersMoney[userId] then
         return ErrorModule.New("UserId not found in playersMoney")
     end
     local success, err = pcall(function()
-        moneyStore:SetAsync(tostring(userId),self.playersMoney[userId].money)
+        local money:Money = self.playersMoney[userId]
+        playersMoneyStore:SetAsync(tostring(userId),money)
     end)
     if not success then
         return ErrorModule.New("Failed to save money for :" .. userId .. " Error : " .. err)

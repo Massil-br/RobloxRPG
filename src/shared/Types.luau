@@ -1,4 +1,4 @@
-
+--!strict
 
 export type Money = {
     money: number,
@@ -45,6 +45,12 @@ export type Health = {
     RemoveMaxHealth:(amount:number)->(Error?),
     Heal:(amount:number)->(Error?),
     
+}
+
+export type HealthManager = {
+    playersHealth:{[number]:Health},
+    New:()->(HealthManager),
+
 }
 
 return {}

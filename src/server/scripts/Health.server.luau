@@ -1,24 +1,27 @@
-local MoneyManager = require(script.Parent.Parent.class.MoneyManager).New()
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local  Types = require(ReplicatedStorage.Shared.Types)
+local Types = require(ReplicatedStorage.Shared.Types)
 type Error = Types.Error
-local err :Error= {}
+local err : Error = {}
+local HealthManager:Types.HealthManager = require(script.Parent.Parent.class.HealthManager).New()
+local Players = game:GetService("Players")
+
+
 Players.PlayerAdded:Connect(function(player)
-    err = MoneyManager:AddUser(player.UserId)
+    err = HealthManager:AddUser(player.UserId)
     if err then
         warn(err:GetMessage())
     end
-    err = MoneyManager:LoadPlayerData(player.UserId)
+    err = HealthManager:LoadPlayerData(player.UserId)
     if err then
         warn(err:GetMessage())
     end
 end)
 
+
 task.spawn(function()
     while true do
         task.wait(60)
-        err = MoneyManager:SaveData()
+        err =HealthManager:SaveData()
         if err then
             warn(err:GetMessage())
         end
@@ -26,12 +29,10 @@ task.spawn(function()
 end)
 
 game:BindToClose(function()
-    err = MoneyManager:SaveData()
+    err = HealthManager:SaveData()
     if err then
         warn(err:GetMessage())
     end
 end)
 
-print("[Server] Money script initialized.")
-
-
+print("[Server] Health script initialized.")
