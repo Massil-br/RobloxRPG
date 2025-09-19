@@ -4,10 +4,10 @@ local Health : Health = require(game.ReplicatedStorage.Shared.class.Player.Healt
 type Health = Types.Health
 type HealthManager = Types.HealthManager
 type Error = Types.Error
-local DataStoreService = game:GetService("DataStoreService")
-local playersHealthStore = DataStoreService:GetDataStore("playersHealthStore")
-
+local StoreName = "playersHealthStore"
+local Save = require(script.Parent.Save)
 local idNotFoundMsg = "UserId not found in playersHealth table"
+local Load = require(script.Parent.Load)
 
 local HealthManager:HealthManager = {} :: HealthManager
 HealthManager.__index = HealthManager
@@ -114,45 +114,39 @@ function HealthManager:AddUser(userId:number):Error?
 end
 
 function HealthManager:LoadPlayerData(userId:number):Error?
-    local success, data = pcall(function()
-         playersHealthStore:GetAsync(tostring(userId))
-    end)
-    if success then 
-        if data then
-            self.playersHealth[userId] = data
+    Load:QueueSave(StoreName,userId,function(success,data)
+        if success then
+            if data then
+                self.playersHealth[userId] = data
+            else
+                self.playersHealth[userId] = Health.New()
+            end
         else
-            self.playersHealth[userId]= Health.New()
+            return Error.New("Failed to load money for :"..userId)
         end
-    else
-        return Error.New("Failed to load Health for userId: "..userId)
-    end
+    end)
+
 end
 
 function HealthManager:LoadData():Error?
     for userId:number, health:Health in pairs(self.playersHealth) do
-        local success,data = pcall(function()
-            playersHealthStore:GetAsync(tostring(userId))
-        end)
-        if success then
-            if data then
-               health = data
+        Load:QueueSave(StoreName,userId,function(success,data)
+            if success then
+                if data then
+                    self.playersHealth[userId] = data
+                else
+                    self.playersHealth[userId] = Health.New()
+                end
             else
-                health = Health.New()
+                Error.New("Failed to load Health for userId: "..userId)
             end
-        else
-            return Error.New("Failed to load Health for userId: " .. userId)
-        end
+        end)
     end
 end
 
 function HealthManager:SaveData():Error?
     for userId, health in pairs(self.playersHealth)do
-        local success, err = pcall(function()
-            playersHealthStore:SetAsync(tostring(userId),health)
-        end)
-        if not success then
-            return Error.New("Failed to save health for :"..userId .. " Error: " ..err)
-        end
+         Save:QueueSave(StoreName,userId,health)
     end
 end
 
@@ -160,12 +154,7 @@ function HealthManager:SavePlayerData(userId:number):Error?
     if not self.playersHealth[userId] then
         return Error.New(idNotFoundMsg)
     end
-    local success, err = pcall(function()
-        playersHealthStore:SetAsync(tostring(userId),self.playersHealth[userId])
-    end)
-    if not success then
-        return Error.New("Failed to save health for :" .. userId .. " Error: ".. err)
-    end
+    Save:QueueSave(StoreName,userId,self.playersHealth[userId])
 end
 
 

@@ -5,8 +5,10 @@ type MoneyManager = Types.MoneyManager
 type Money = Types.Money
 type Error = Types.Error
 local DataStoreService = game:GetService("DataStoreService")
+local StoreName = "playersHealthStore"
 local playersMoneyStore = DataStoreService:GetDataStore("playersMoneyStore")
-
+local Save = require(script.Parent.Save)
+local Load = require(script.Parent.Load)
 local MoneyManager = {}
 MoneyManager.__index = MoneyManager
 
@@ -72,48 +74,42 @@ function MoneyManager:LoadPlayerData(userId:number):Error?
         self:AddUser(userId)
     end
 
-    local success, data = pcall(function()
-        playersMoneyStore:GetAsync(tostring(userId))
+    Load:QueueSave(StoreName,userId,function(success,data)
+        if success then
+            if data then
+                self.playersMoney[userId] = data
+            else
+                self.playersMoney[userId]=MoneyModule.New()
+            end
+        else
+            ErrorModule.New("Failed to load money for:"..userId)
+        end
     end)
 
-    if success then
-        if data then
-            self.playersMoney[userId]:SetMoney(data)
-        else
-            self.playersMoney[userId]:SetMoney(0)
-        end
-    else
-        return ErrorModule.New("Failed to load money for :"..userId)
-    end
 end
 
 function MoneyManager:LoadData():Error?
     local self = self
     for userId, money in pairs(self.playersMoney) do
-        local success, data = pcall(function()
-            playersMoneyStore:GetAsync(tostring(userId))
-        end)
-        if success then
-            if data then
-                money:SetMoney(data)
+
+        Load:QueueSave(StoreName,userId,function(success,data)
+            if success then
+                if data then
+                    money = data
+                else
+                    money = MoneyModule.New()
+                end
             else
-                money:SetMoney(0)
+                ErrorModule.New("Failed to load money for :" ..userId)
             end
-        else
-            return ErrorModule.New("Failed to load money for userId: "..userId)
-        end
+        end)
     end
 end
 
 function MoneyManager:SaveData():Error?
     local self = self
     for userId, money:Money in pairs(self.playersMoney)do
-        local success,err = pcall(function()
-            playersMoneyStore:SetAsync(tostring(userId),money.money)
-        end)
-        if not success then
-            return ErrorModule.New("Failed to save money for: " .. userId.." Error: "..err)
-        end
+        Save:QueueSave(StoreName,userId,money)
     end
 end
 
@@ -122,12 +118,6 @@ function MoneyManager:SavePlayerData( userId:number):Error?
     if not self.playersMoney[userId] then
         return ErrorModule.New("UserId not found in playersMoney")
     end
-    local success, err = pcall(function()
-        local money:Money = self.playersMoney[userId]
-        playersMoneyStore:SetAsync(tostring(userId),money)
-    end)
-    if not success then
-        return ErrorModule.New("Failed to save money for :" .. userId .. " Error : " .. err)
-    end
+    Save:QueueSave(StoreName,userId,playersMoneyStore[userId])
 end
 return MoneyManager
