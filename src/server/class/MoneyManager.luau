@@ -82,7 +82,7 @@ function MoneyManager:LoadPlayerData(userId:number):Error?
                 self.playersMoney[userId]=MoneyModule.New()
             end
         else
-            ErrorModule.New("Failed to load money for:"..userId)
+            warn("Failed to load money for: "..userId)
         end
     end)
 
@@ -100,7 +100,7 @@ function MoneyManager:LoadData():Error?
                     money = MoneyModule.New()
                 end
             else
-                ErrorModule.New("Failed to load money for :" ..userId)
+                warn("Failed to load money for :" ..userId)
             end
         end)
     end
