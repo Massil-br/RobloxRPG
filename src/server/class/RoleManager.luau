@@ -31,7 +31,7 @@ function RoleManager:LoadPlayerData(userId:number)
                 self.playersRole[userId] = Role.New()
             end
         else
-            Error.New("Failed to load role for : "..userId)
+           warn("Failed to load role for : "..userId)
         end
     end)
 end

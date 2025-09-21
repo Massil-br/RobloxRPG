@@ -74,6 +74,7 @@ function MoneyManager:LoadPlayerData(userId:number):Error?
         self:AddUser(userId)
     end
 
+
     Load:QueueSave(StoreName,userId,function(success,data)
         if success then
             if data then
